@@ -3,7 +3,6 @@ import {
   CalendarDays,
   Ellipsis,
   Heart,
-  Smartphone,
   Map as MapIcon,
   Package,
   Pause,
@@ -41,7 +40,7 @@ export function GameHUD() {
 
   return (
     <div className="pointer-events-none absolute inset-x-0 top-0 z-20 p-2 sm:p-3">
-      <div className="panel pointer-events-auto mx-auto flex max-w-7xl flex-wrap items-center gap-2 px-2.5 py-1.5 sm:px-3">
+      <div className="panel pointer-events-auto mx-auto hidden max-w-7xl flex-wrap items-center gap-2 px-2.5 py-1.5 sm:flex sm:px-3">
         <div className="flex min-w-0 items-center gap-2">
           <AvatarPortrait
             look={{
@@ -105,16 +104,30 @@ export function GameHUD() {
             <Pause size={14} />
           </button>
         </div>
-        <div className="ml-auto flex shrink-0 items-center gap-1 sm:hidden">
-          <button
-            type="button"
-            onClick={() => setPanel('phone')}
-            className="btn-ghost !h-8 !w-8 !p-0"
-            title="Phone"
-            aria-label="Phone"
-          >
-            <Smartphone size={15} />
-          </button>
+      </div>
+      <div className="panel pointer-events-auto mx-auto flex max-w-lg items-center gap-2 px-2 py-1.5 sm:hidden">
+        <AvatarPortrait
+          look={{
+            gender: save.gender,
+            skinTone: save.profile.skinTone,
+            hairStyle: save.profile.hairStyle,
+            hairColor: save.profile.hairColor,
+            outfitPrimary: info.accent,
+            outfitSecondary: '#1e293b',
+          }}
+          size={30}
+          ring={`${info.accent}88`}
+        />
+        <div className="min-w-0 flex-1 leading-tight">
+          <div className="truncate text-[11px] font-bold text-white">{save.profile.name}</div>
+          <div className="truncate text-[9px] text-slate-400">
+            {location.short} · Day {save.clock.day} · {formatClock(save.clock.hour)}
+          </div>
+        </div>
+        <span className="shrink-0 rounded-lg bg-amber-400/10 px-2 py-1 text-[10px] font-bold text-amber-200">
+          {formatMoney(save.balance)}
+        </span>
+        <div className="flex shrink-0 items-center gap-1">
           <button
             type="button"
             onClick={() => setPanel('map')}

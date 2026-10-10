@@ -66,11 +66,4 @@ canvas {
     border-radius: 9999px;
   }
 
-  .scene-action-dock {
-    scrollbar-width: none;
-  }
-
-  .scene-action-dock::-webkit-scrollbar {
-    display: none;
-  }
 }

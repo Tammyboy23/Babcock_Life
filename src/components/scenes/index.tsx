@@ -13,6 +13,7 @@ import {
   Droplets,
   Dumbbell,
   Footprints,
+  Grid2X2,
   GraduationCap,
   Mail,
   MapPin,
@@ -29,6 +30,7 @@ import {
   Trophy,
   Utensils,
   Users,
+  X,
 } from 'lucide-react'
 import type { LocationId, SaveData, TimePhase } from '../../types'
 import { PHASE_PALETTE } from '../../game/constants'
@@ -227,6 +229,20 @@ function SceneFrame({
   const palette = PHASE_PALETTE[phase] ?? PHASE_PALETTE.Morning
   const [activityCue, setActivityCue] = useState<{ id: string; key: number } | null>(null)
   const [cueKey, setCueKey] = useState(0)
+  const [actionsOpen, setActionsOpen] = useState(false)
+  const activateHotspot = (spot: HotspotDef) => {
+    if (spot.kind === 'activity') {
+      const nextKey = cueKey + 1
+      setCueKey(nextKey)
+      setActivityCue({ id: spot.target, key: nextKey })
+      onActivity(spot.target)
+    } else if (spot.kind === 'npc') {
+      onNpc(spot.target)
+    } else {
+      onTravel()
+    }
+    setActionsOpen(false)
+  }
   return (
     <div className="relative h-full min-h-0 w-full overflow-hidden bg-slate-950">
       <Environment3D location={location} phase={phase} activityCue={activityCue} />
@@ -237,32 +253,73 @@ function SceneFrame({
         aria-hidden="true"
       />
 
-      <div className="scene-action-dock absolute inset-x-0 bottom-0 z-10 flex max-w-full gap-1 overflow-x-auto bg-slate-950/60 p-1.5 backdrop-blur-sm sm:inset-0 sm:overflow-visible sm:bg-transparent sm:p-0 sm:backdrop-blur-none sm:pointer-events-none">
+      <div className="pointer-events-none absolute inset-0 hidden sm:block">
         {hotspots.map((spot) => (
           <button
             key={spot.id}
             type="button"
-            onClick={() => {
-              if (spot.kind === 'activity') {
-                const nextKey = cueKey + 1
-                setCueKey(nextKey)
-                setActivityCue({ id: spot.target, key: nextKey })
-                onActivity(spot.target)
-              }
-              else if (spot.kind === 'npc') onNpc(spot.target)
-              else onTravel()
-            }}
-            className="group pointer-events-auto absolute -translate-x-1/2 -translate-y-1/2 rounded-xl border border-white/25 bg-slate-950/70 px-2 py-1 text-[11px] font-semibold text-white shadow-lg backdrop-blur-sm transition hover:-translate-y-[60%] hover:border-violet-300/70 hover:bg-violet-600/80 focus:outline-none focus-visible:ring-2 focus-visible:ring-violet-300 max-sm:!relative max-sm:!left-auto max-sm:!top-auto max-sm:!h-9 max-sm:!w-9 max-sm:!shrink-0 max-sm:!transform-none max-sm:!p-0 max-sm:!justify-center"
+            onClick={() => activateHotspot(spot)}
+            className="group pointer-events-auto absolute -translate-x-1/2 -translate-y-1/2 rounded-xl border border-white/25 bg-slate-950/70 px-2 py-1 text-[11px] font-semibold text-white shadow-lg backdrop-blur-sm transition hover:-translate-y-[60%] hover:border-violet-300/70 hover:bg-violet-600/80 focus:outline-none focus-visible:ring-2 focus-visible:ring-violet-300"
             style={{ left: `${spot.x}%`, top: `${spot.y}%` }}
             title={spot.hint ? `${spot.label} — ${spot.hint}` : spot.label}
             aria-label={spot.hint ? `${spot.label} — ${spot.hint}` : spot.label}
           >
             <span className="flex items-center gap-1.5">
               <SceneIcon name={spot.icon} />
-              <span className="whitespace-nowrap max-sm:hidden">{spot.label}</span>
+              <span className="whitespace-nowrap">{spot.label}</span>
             </span>
           </button>
         ))}
+      </div>
+
+      <div className="pointer-events-none absolute inset-x-0 bottom-0 z-20 px-3 pb-[max(0.75rem,env(safe-area-inset-bottom))] sm:hidden">
+        {actionsOpen && (
+          <div className="panel pointer-events-auto mx-auto mb-2 max-h-[42svh] max-w-lg animate-fade-up overflow-y-auto p-2.5">
+            <div className="mb-2 flex items-center justify-between px-1">
+              <span className="text-xs font-bold text-white">{label}</span>
+              <button
+                type="button"
+                onClick={() => setActionsOpen(false)}
+                className="btn-ghost !h-7 !w-7 !p-0"
+                aria-label="Close actions"
+              >
+                <X size={14} />
+              </button>
+            </div>
+            <div className="grid grid-cols-3 gap-1.5">
+              {hotspots.map((spot) => (
+                <button
+                  key={spot.id}
+                  type="button"
+                  onClick={() => activateHotspot(spot)}
+                  className="flex min-h-14 min-w-0 flex-col items-center justify-center gap-1 rounded-lg border border-white/10 bg-white/5 px-1.5 py-2 text-center text-[10px] font-semibold leading-tight text-slate-100 transition active:bg-white/15"
+                  aria-label={spot.hint ? `${spot.label} — ${spot.hint}` : spot.label}
+                >
+                  <SceneIcon name={spot.icon} size={16} />
+                  <span className="line-clamp-2">{spot.label}</span>
+                </button>
+              ))}
+            </div>
+          </div>
+        )}
+        <div className="pointer-events-auto mx-auto flex max-w-lg items-center gap-2 rounded-xl border border-white/15 bg-slate-950/90 p-2 shadow-2xl backdrop-blur-lg">
+          <button
+            type="button"
+            onClick={() => onTravel()}
+            className="btn-ghost h-11 flex-1 !justify-center !text-xs"
+          >
+            <MapPin size={15} /> Travel
+          </button>
+          <button
+            type="button"
+            onClick={() => setActionsOpen((open) => !open)}
+            className="btn-primary h-11 flex-[1.5] !justify-center !text-xs"
+            aria-expanded={actionsOpen}
+          >
+            {actionsOpen ? <X size={15} /> : <Grid2X2 size={15} />}
+            {actionsOpen ? 'Close' : 'Actions'}
+          </button>
+        </div>
       </div>
 
       <span className="pointer-events-none absolute left-3 top-3 rounded-full bg-slate-950/70 px-2.5 py-1 text-[10px] font-bold uppercase tracking-widest text-slate-200 backdrop-blur">
