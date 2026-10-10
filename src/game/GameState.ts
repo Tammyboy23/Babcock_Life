@@ -70,6 +70,9 @@ export interface GameStore {
   openNpc: (npcId: string) => void
   closeNpc: () => void
   interactNpc: (npcId: string, interactionId: InteractionId) => void
+  phoneMessage: (npcId: string, message: string) => string
+  submitAssignment: () => void
+  placeBet: (stake: number) => void
 
   resolveEvent: (choiceId: string) => void
   dismissEventResult: () => void
@@ -640,6 +643,76 @@ export const useGame = create<GameStore>()((set, get) => {
       const finalSave = get().save ?? next
       if (moved.daysPassed > 0) announceDay(finalSave.clock)
       maybeEvent(finalSave, eventChance)
+    },
+
+    phoneMessage: (npcId, message) => {
+      const save = get().save
+      const npc = NPC_BY_ID[npcId]
+      const text = message.trim().slice(0, 160)
+      if (!save || !npc || !text) return ''
+
+      const reply = pickLine(npc.lines.chat)
+      const moved = advanceTime(relationshipDeltas(save, { [npcId]: 2 }), 5)
+      const next = {
+        ...moved.save,
+        needs: applyNeedDeltas(moved.save.needs, { social: 2 }),
+      }
+      commit(() => next)
+      playSfx('interact')
+      push({ title: `Message from ${npc.name}`, body: reply, kind: 'info' })
+      return reply
+    },
+
+    submitAssignment: () => {
+      const save = get().save
+      if (!save) return
+      if (save.needs.energy < 8) {
+        playSfx('error')
+        push({ title: 'Too tired to study', body: 'Rest before working on another assignment.', kind: 'error' })
+        return
+      }
+
+      const moved = advanceTime(save, 45)
+      const next = {
+        ...moved.save,
+        needs: applyNeedDeltas(moved.save.needs, { academic: 10, energy: -8, hunger: -4 }),
+        stats: { ...moved.save.stats, studySessions: moved.save.stats.studySessions + 1 },
+      }
+      commit(() => next)
+      playSfx('click')
+      push({ title: 'Assignment submitted', body: 'A focused study session improved your academic progress.', kind: 'success' })
+      if (moved.daysPassed > 0) announceDay(next.clock)
+    },
+
+    placeBet: (stake) => {
+      const save = get().save
+      if (!save) return
+      if (!Number.isInteger(stake) || stake < 100 || stake > 5_000) {
+        playSfx('error')
+        push({ title: 'Invalid stake', body: 'Choose a stake between ₦100 and ₦5,000.', kind: 'error' })
+        return
+      }
+      if (save.balance < stake) {
+        playSfx('error')
+        push({ title: 'Not enough money', body: `You need ${formatMoney(stake)} to place that bet.`, kind: 'error' })
+        return
+      }
+
+      const won = Math.random() < 0.42
+      const payout = won ? stake * 2 : 0
+      const moved = advanceTime({ ...save, balance: save.balance - stake + payout }, 15)
+      const next = {
+        ...moved.save,
+        needs: applyNeedDeltas(moved.save.needs, { happiness: won ? 3 : -3, energy: -2 }),
+      }
+      commit(() => next)
+      playSfx(won ? 'reward' : 'error')
+      push({
+        title: won ? 'You won the campus draw' : 'No luck this round',
+        body: won ? `${formatMoney(payout)} returned to your balance.` : `${formatMoney(stake)} lost. Set a limit and take a break.`,
+        kind: won ? 'reward' : 'info',
+      })
+      if (moved.daysPassed > 0) announceDay(next.clock)
     },
 
     resolveEvent: (choiceId) => {

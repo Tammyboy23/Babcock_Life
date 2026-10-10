@@ -253,8 +253,8 @@ export function parseSave(raw: string | null): SaveData | null {
     },
     gender: safeGender,
     lifestyle,
-    hostelId: typeof parsed.hostelId === 'string' ? parsed.hostelId : hostel.id,
-    hostelName: typeof parsed.hostelName === 'string' ? parsed.hostelName : hostel.name,
+    hostelId: hostel.id,
+    hostelName: hostel.name,
     balance: hasBalance
       ? Math.max(0, clampNumber(parsed.balance, 0, 0, 999_999_999))
       : STARTING_ALLOWANCE[lifestyle],

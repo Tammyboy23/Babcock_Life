@@ -40,17 +40,17 @@ export interface HostelDef {
 
 export const HOSTELS: Record<Gender, HostelDef> = {
   boy: {
-    id: 'sapphire',
-    name: 'Sapphire Hall (Male Wing)',
-    short: 'Sapphire Hall',
+    id: 'emerald',
+    name: 'Emerald Hall (Male Wing)',
+    short: 'Emerald Hall',
     gender: 'boy',
     blurb: 'Fictionalised male residence wing, close to the sports centre.',
     accent: '#4f7fc4',
   },
   girl: {
-    id: 'amethyst',
-    name: 'Amethyst Hall (Female Wing)',
-    short: 'Amethyst Hall',
+    id: 'sapphire',
+    name: 'Sapphire Hall (Female Wing)',
+    short: 'Sapphire Hall',
     gender: 'girl',
     blurb: 'Fictionalised female residence wing, a short walk from the library.',
     accent: '#c76d93',

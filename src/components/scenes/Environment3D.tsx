@@ -1,6 +1,7 @@
 import { useEffect, useRef } from 'react'
 import * as THREE from 'three'
 import type { LocationId, TimePhase } from '../../types'
+import type { AvatarLook } from './Avatar'
 
 type Point = [number, number, number]
 
@@ -67,25 +68,112 @@ function line(group: THREE.Group, from: Point, to: Point, color: string, opacity
   group.add(stroke)
 }
 
-function person(group: THREE.Group, x: number, z: number, shirt: string, scale = 1, isPlayer = false) {
+function person(
+  group: THREE.Group,
+  x: number,
+  z: number,
+  shirt: string,
+  scale = 1,
+  isPlayer = false,
+  look?: AvatarLook,
+) {
   const character = new THREE.Group()
   character.position.set(x, 0, z)
   character.name = isPlayer ? 'player' : 'resident'
-  const torso = cylinder(character, 0, 0.62 * scale, 0, 0.24 * scale, 0.3 * scale, 0.8 * scale, shirt)
-  const head = sphere(character, 0, 1.22 * scale, 0, 0.22 * scale, '#9a654b')
-  const hair = sphere(character, 0, 1.27 * scale, -0.04 * scale, 0.22 * scale, '#211c1b')
-  const leftArm = cylinder(character, -0.27 * scale, 0.68 * scale, 0, 0.075 * scale, 0.085 * scale, 0.5 * scale, shirt)
-  const rightArm = cylinder(character, 0.27 * scale, 0.68 * scale, 0, 0.075 * scale, 0.085 * scale, 0.5 * scale, shirt)
-  const leftLeg = cylinder(character, -0.12 * scale, 0.12 * scale, 0, 0.08 * scale, 0.09 * scale, 0.24 * scale, '#29313b')
-  const rightLeg = cylinder(character, 0.12 * scale, 0.12 * scale, 0, 0.08 * scale, 0.09 * scale, 0.24 * scale, '#29313b')
+  const size = isPlayer ? scale * 1.14 : scale
+  const skinColors = ['#5c3825', '#77472e', '#8a573d', '#a56c4d']
+  const hairColors = ['#171313', '#241811', '#352317', '#111827']
+  const variation = Math.abs(Math.round(x * 17 + z * 31))
+  const skin = look?.skinTone ?? skinColors[variation % skinColors.length]
+  const hairColor = look?.hairColor ?? hairColors[(variation + 1) % hairColors.length]
+  const outfit = look?.outfitPrimary ?? shirt
+  const secondary = look?.outfitSecondary ?? '#25354c'
+
+  const torso = new THREE.Mesh(
+    new THREE.CapsuleGeometry(0.25 * size, 0.46 * size, 4, 10),
+    material(outfit, 0.72),
+  )
+  torso.position.set(0, 0.79 * size, 0)
+  torso.scale.set(1, 1, 0.82)
+  torso.castShadow = true
+  character.add(torso)
+
+  const neck = cylinder(character, 0, 1.17 * size, 0, 0.075 * size, 0.08 * size, 0.18 * size, skin)
+  const head = sphere(character, 0, 1.43 * size, 0, 0.23 * size, skin)
+  head.scale.set(0.88, 1.08, 0.92)
+  const ears = [-1, 1].map((side) => sphere(character, side * 0.205 * size, 1.42 * size, 0, 0.055 * size, skin))
+  const eyes = [-1, 1].map((side) => sphere(character, side * 0.075 * size, 1.45 * size, 0.195 * size, 0.022 * size, '#171717'))
+  const nose = sphere(character, 0, 1.385 * size, 0.216 * size, 0.035 * size, skin)
+  nose.scale.set(0.8, 1.1, 0.8)
+
+  const hairstyle = look?.hairStyle ?? variation % 6
+  let hair: THREE.Mesh
+  if (hairstyle === 1) {
+    hair = sphere(character, 0, 1.54 * size, -0.005 * size, 0.31 * size, hairColor)
+  } else if (hairstyle === 2) {
+    hair = sphere(character, 0, 1.57 * size, -0.025 * size, 0.235 * size, hairColor)
+    for (const side of [-1, 1]) {
+      const braid = cylinder(character, side * 0.2 * size, 1.28 * size, -0.015 * size, 0.045 * size, 0.05 * size, 0.54 * size, hairColor)
+      braid.rotation.z = side * -0.08
+    }
+  } else if (hairstyle === 3) {
+    hair = sphere(character, 0, 1.56 * size, -0.03 * size, 0.24 * size, hairColor)
+    sphere(character, 0.025 * size, 1.73 * size, -0.025 * size, 0.095 * size, hairColor)
+  } else if (hairstyle === 5) {
+    hair = sphere(character, 0, 1.56 * size, -0.005 * size, 0.27 * size, look?.outfitSecondary ?? '#bc5f62')
+    hair.scale.set(1.05, 0.55, 1.05)
+  } else {
+    hair = sphere(character, 0, 1.55 * size, -0.035 * size, 0.24 * size, hairColor)
+    hair.scale.set(1, 0.67, 1)
+    if (hairstyle === 4) {
+      const beard = sphere(character, 0, 1.29 * size, 0.08 * size, 0.12 * size, hairColor)
+      beard.scale.set(0.8, 0.62, 0.7)
+    }
+  }
+
+  const leftArm = new THREE.Group()
+  const rightArm = new THREE.Group()
+  leftArm.position.set(-0.245 * size, 1.04 * size, 0)
+  rightArm.position.set(0.245 * size, 1.04 * size, 0)
+  for (const [arm, side] of [[leftArm, -1], [rightArm, 1]] as const) {
+    const upperArm = new THREE.Mesh(new THREE.CapsuleGeometry(0.075 * size, 0.31 * size, 3, 8), material(outfit, 0.74))
+    upperArm.position.set(side * 0.035 * size, -0.22 * size, 0)
+    upperArm.rotation.z = side * -0.1
+    upperArm.castShadow = true
+    arm.add(upperArm)
+    const hand = sphere(arm, side * 0.045 * size, -0.43 * size, 0.015 * size, 0.07 * size, skin)
+    hand.scale.set(0.88, 1.1, 0.76)
+    character.add(arm)
+  }
+
+  const leftLeg = new THREE.Group()
+  const rightLeg = new THREE.Group()
+  leftLeg.position.set(-0.115 * size, 0.49 * size, 0)
+  rightLeg.position.set(0.115 * size, 0.49 * size, 0)
+  for (const [leg, side] of [[leftLeg, -1], [rightLeg, 1]] as const) {
+    const trousers = new THREE.Mesh(new THREE.CapsuleGeometry(0.085 * size, 0.34 * size, 3, 8), material(secondary, 0.82))
+    trousers.position.y = -0.23 * size
+    trousers.castShadow = true
+    leg.add(trousers)
+    const shoe = new THREE.Mesh(new THREE.SphereGeometry(0.105 * size, 12, 8), material('#252a32'))
+    shoe.position.set(0, -0.47 * size, 0.045 * size)
+    shoe.scale.set(0.9, 0.58, 1.35)
+    shoe.castShadow = true
+    leg.add(shoe)
+    leg.name = side < 0 ? 'player-left-leg' : 'player-right-leg'
+    character.add(leg)
+  }
+
   if (isPlayer) {
     torso.name = 'player-outfit'
+    neck.name = 'player-neck'
     head.name = 'player-skin'
     hair.name = 'player-hair'
+    ears.forEach((ear, index) => (ear.name = `player-ear-${index}`))
+    eyes.forEach((eye, index) => (eye.name = `player-eye-${index}`))
+    nose.name = 'player-nose'
     leftArm.name = 'player-left-arm'
     rightArm.name = 'player-right-arm'
-    leftLeg.name = 'player-left-leg'
-    rightLeg.name = 'player-right-leg'
   }
   group.add(character)
   return character
@@ -110,9 +198,20 @@ function buildRoom(group: THREE.Group, floorColor: string, wallColor: string) {
   box(group, -9.85, 3.05, 0, 0.3, 6.4, 15, wallColor).name = 'room-left-wall'
   box(group, 9.85, 3.05, 0, 0.3, 6.4, 15, wallColor).name = 'room-right-wall'
   box(group, 0, 0.04, -7.08, 19.4, 0.14, 0.14, '#d5c6ac')
+  box(group, 0, 0.09, 7.25, 19.5, 0.18, 0.12, '#c8ad8b')
+  box(group, -9.72, 0.09, 0, 0.12, 0.18, 14.5, '#c8ad8b')
+  box(group, 9.72, 0.09, 0, 0.12, 0.18, 14.5, '#c8ad8b')
+  for (let index = -8; index <= 8; index += 2) {
+    box(group, index, 0.008, 0, 0.018, 0.012, 14.2, '#806344')
+  }
+  box(group, -6.3, 2.7, -7.08, 2.1, 1.25, 0.08, '#8d633e')
+  box(group, -6.3, 2.7, -7.015, 1.88, 1.04, 0.04, '#d4aa6b')
+  box(group, 0, 5.2, -1.8, 0.08, 1.05, 0.08, '#9c8060')
+  cylinder(group, 0, 4.57, -1.8, 0.46, 0.28, 0.34, '#e5c37a')
+  sphere(group, 0, 4.38, -1.8, 0.16, '#fff0bd')
 }
 
-function buildHostel(group: THREE.Group) {
+function buildHostel(group: THREE.Group, look: AvatarLook) {
   buildRoom(group, '#a77e57', '#ddd2bf')
   box(group, -5.2, 1.8, -7.08, 4.2, 2.7, 0.12, '#8ec3d1')
   box(group, -5.2, 1.8, -6.96, 0.12, 2.9, 0.16, '#f2eee5')
@@ -126,10 +225,10 @@ function buildHostel(group: THREE.Group) {
   box(group, 6.3, 1.65, -4.5, 2.2, 3.3, 1.25, '#85552f')
   box(group, 6.3, 1.65, -3.83, 0.08, 3.2, 0.06, '#d5a66a')
   box(group, -1.2, 0.03, 1.8, 4.8, 0.08, 3.4, '#bc916b')
-  person(group, 2.1, 1, '#397aa2', 0.9, true)
+  person(group, 2.1, 1, look.outfitPrimary, 0.9, true, look)
 }
 
-function buildCafeteria(group: THREE.Group) {
+function buildCafeteria(group: THREE.Group, look: AvatarLook) {
   buildRoom(group, '#c9aa7b', '#eddfc8')
   box(group, 0, 1.65, -6.75, 10.5, 2.3, 0.5, '#39454c')
   box(group, 0, 2.2, -6.43, 9.8, 1.1, 0.12, '#202a30')
@@ -139,10 +238,12 @@ function buildCafeteria(group: THREE.Group) {
   table(group, -4.8, 2.1, '#bf8c54')
   table(group, 0, 2.5, '#bf8c54')
   table(group, 4.8, 2.1, '#bf8c54')
-  for (const [index, x] of [-6, -1.4, 3.2].entries()) person(group, x, 1.3, '#417c69', 0.92, index === 0)
+  for (const [index, x] of [-6, -1.4, 3.2].entries()) {
+    person(group, x, 1.3, index === 0 ? look.outfitPrimary : '#417c69', 0.92, index === 0, index === 0 ? look : undefined)
+  }
 }
 
-function buildLecture(group: THREE.Group) {
+function buildLecture(group: THREE.Group, look: AvatarLook) {
   buildRoom(group, '#777e8b', '#d6d8df')
   box(group, 0, 2.55, -7.02, 9.2, 2.7, 0.12, '#f5f3ed')
   box(group, 0, 2.5, -6.92, 0.08, 2.4, 0.12, '#aab2b8')
@@ -155,11 +256,11 @@ function buildLecture(group: THREE.Group) {
       box(group, x, 0.65, z + 0.31, 1.15, 0.5, 0.12, '#667c91')
     }
   }
-  person(group, 1.8, 2.1, '#2f739b', 0.94, true)
+  person(group, 1.8, 2.1, look.outfitPrimary, 0.94, true, look)
   person(group, -2.8, 0.8, '#a34f48', 0.88)
 }
 
-function buildLibrary(group: THREE.Group) {
+function buildLibrary(group: THREE.Group, look: AvatarLook) {
   buildRoom(group, '#9c7958', '#e4d8c6')
   for (const x of [-7.2, 7.2]) {
     box(group, x, 2.05, -5.7, 2.5, 4.1, 0.75, '#744a30')
@@ -174,11 +275,11 @@ function buildLibrary(group: THREE.Group) {
   }
   table(group, -2.4, 0.2)
   table(group, 2.4, 1.8)
-  person(group, -2.5, 1.5, '#4e7787', 0.88, true)
+  person(group, -2.5, 1.5, look.outfitPrimary, 0.88, true, look)
   person(group, 2.4, 0.2, '#826048', 0.88)
 }
 
-function buildSports(group: THREE.Group) {
+function buildSports(group: THREE.Group, look: AvatarLook) {
   box(group, 0, -0.3, 0, 24, 0.5, 20, '#4c9557')
   box(group, 0, -0.02, 0, 14, 0.06, 10, '#b77847')
   for (const z of [-4.7, 4.7]) line(group, [-7, 0.03, z], [7, 0.03, z], '#f4f0de')
@@ -191,13 +292,13 @@ function buildSports(group: THREE.Group) {
     box(group, x, 1.6, 1.5, 2.4, 0.18, 0.18, '#ece8dc')
   }
   box(group, 0, 1.1, -7.7, 10.5, 2.2, 0.35, '#8793a0')
-  person(group, -1.1, 0.1, '#e4dfce', 1.02, true)
+  person(group, -1.1, 0.1, look.outfitPrimary, 1.02, true, look)
   person(group, 2.2, -2.1, '#bd5546', 0.95)
   tree(group, -10, -3, 0.85)
   tree(group, 10, -4, 0.95)
 }
 
-function buildShop(group: THREE.Group) {
+function buildShop(group: THREE.Group, look: AvatarLook) {
   buildRoom(group, '#a7aca3', '#dbe3d9')
   for (const x of [-6.2, -2.3, 2.1]) {
     box(group, x, 1.8, -5.7, 2.45, 3.6, 0.7, '#a5b0ae')
@@ -211,10 +312,10 @@ function buildShop(group: THREE.Group) {
   }
   box(group, 5, 0.84, -1.3, 6.5, 1.65, 1.4, '#37855a')
   box(group, 4.8, 1.74, -1.25, 1.4, 0.18, 0.8, '#233443')
-  person(group, 5.9, -0.1, '#3b7397', 0.92, true)
+  person(group, 5.9, -0.1, look.outfitPrimary, 0.92, true, look)
 }
 
-function buildHangout(group: THREE.Group) {
+function buildHangout(group: THREE.Group, look: AvatarLook) {
   box(group, 0, -0.3, 0, 24, 0.5, 20, '#799765')
   box(group, 0, -0.02, 0, 9, 0.06, 12, '#b6a079')
   for (const [x, z, size] of [[-8, -5, 1.1], [8, -4, 1], [-9, 5, 0.9], [9, 5, 1.15]] as const) {
@@ -226,11 +327,11 @@ function buildHangout(group: THREE.Group) {
     box(group, 3.2, 0.7, z, 2.6, 0.18, 0.65, '#986443')
     box(group, 3.2, 0.45, z, 2.4, 0.18, 0.52, '#76513a')
   }
-  person(group, -1.6, 1, '#c45d50', 0.9, true)
+  person(group, -1.6, 1, look.outfitPrimary, 0.9, true, look)
   person(group, 1.5, -1, '#437b9a', 0.92)
 }
 
-function buildEvent(group: THREE.Group) {
+function buildEvent(group: THREE.Group, look: AvatarLook) {
   box(group, 0, -0.3, 0, 24, 0.5, 20, '#63865b')
   box(group, 0, 0.62, -6, 9.8, 1.3, 1.2, '#986044')
   box(group, 0, 2.05, -6.55, 12, 1.35, 0.22, '#3b6384')
@@ -246,10 +347,10 @@ function buildEvent(group: THREE.Group) {
   for (let index = 0; index < 7; index += 1) {
     person(group, -6 + index * 2, 2.1 + (index % 2) * 1.2, ['#9a5262', '#487b75', '#bf8c42'][index % 3], 0.82)
   }
-  person(group, 0, 0.7, '#d1b15a', 0.96, true)
+  person(group, 0, 0.7, look.outfitPrimary, 0.96, true, look)
 }
 
-const BUILDERS: Record<LocationId, (group: THREE.Group) => void> = {
+const BUILDERS: Record<LocationId, (group: THREE.Group, look: AvatarLook) => void> = {
   hostel: buildHostel,
   cafeteria: buildCafeteria,
   lecture: buildLecture,
@@ -270,11 +371,15 @@ const SKY: Record<TimePhase, string> = {
 export function Environment3D({
   location,
   phase,
+  playerLook,
   activityCue,
+  animationsEnabled,
 }: {
   location: LocationId
   phase: TimePhase
+  playerLook: AvatarLook
   activityCue: { id: string; key: number } | null
+  animationsEnabled: boolean
 }) {
   const host = useRef<HTMLDivElement>(null)
   const cameraState = useRef<{ location: LocationId; azimuth: number; elevation: number } | null>(null)
@@ -308,7 +413,7 @@ export function Environment3D({
 
     const environment = new THREE.Group()
     scene.add(environment)
-    BUILDERS[location](environment)
+    BUILDERS[location](environment, playerLook)
     const player = environment.getObjectByName('player')
     const savedPlayer = playerPositions.current.get(location)
     if (player && savedPlayer) {
@@ -349,7 +454,7 @@ export function Environment3D({
     element.appendChild(renderer.domElement)
 
     let actionAnimationFrame = 0
-    const actionFrame = activityCue
+    const actionFrame = activityCue && animationsEnabled
       ? requestAnimationFrame((started) => {
           const activity = activityCue.id
           const playerTorso = player?.getObjectByName('player-outfit')
@@ -552,9 +657,9 @@ export function Environment3D({
       const width = Math.max(1, element.clientWidth)
       const height = Math.max(1, element.clientHeight)
       renderer.setSize(width, height)
-      camera.aspect = width / height
-      camera.left = (-viewHeight * camera.aspect) / 2
-      camera.right = (viewHeight * camera.aspect) / 2
+      const aspect = width / height
+      camera.left = (-viewHeight * aspect) / 2
+      camera.right = (viewHeight * aspect) / 2
       camera.top = viewHeight / 2
       camera.bottom = -viewHeight / 2
       camera.updateProjectionMatrix()
@@ -592,7 +697,7 @@ export function Environment3D({
       })
       element.replaceChildren()
     }
-  }, [location, phase, activityCue?.key])
+  }, [location, phase, playerLook.gender, playerLook.skinTone, playerLook.hairStyle, playerLook.hairColor, playerLook.outfitPrimary, playerLook.outfitSecondary, activityCue?.key, animationsEnabled])
 
   return <div ref={host} className="absolute inset-0 overflow-hidden" />
 }

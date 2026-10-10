@@ -95,7 +95,7 @@ export function CharacterCreator({ onBack }: CharacterCreatorProps) {
             </g>
           </svg>
           <div className="pointer-events-none absolute bottom-2 left-1/2 -translate-x-1/2 rounded-full bg-slate-950/70 px-3 py-1 text-[10px] font-semibold text-slate-200">
-            {name.trim() || 'Your student'} · {gender === 'boy' ? 'Sapphire Hall' : 'Amethyst Hall'}
+            {name.trim() || 'Your student'} · {gender === 'boy' ? 'Emerald Hall' : 'Sapphire Hall'}
           </div>
         </div>
 
@@ -142,7 +142,7 @@ export function CharacterCreator({ onBack }: CharacterCreatorProps) {
                 >
                   {entry}
                   <span className="mt-0.5 block text-[10px] font-normal text-slate-400">
-                    {entry === 'boy' ? 'Sapphire Hall' : 'Amethyst Hall'}
+                    {entry === 'boy' ? 'Emerald Hall' : 'Sapphire Hall'}
                   </span>
                 </button>
               ))}

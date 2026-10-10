@@ -73,8 +73,8 @@ async function run(): Promise<void> {
   check('save version is current', nepo.version === SAVE_VERSION, `${nepo.version}`)
   check('NEPO allowance is ₦500,000', nepo.balance === 500_000, `${nepo.balance}`)
   check('LAPO allowance is ₦50,000', lapo.balance === 50_000, `${lapo.balance}`)
-  check('NEPO boy hostel is Sapphire Hall', nepo.hostelId === 'sapphire', nepo.hostelId)
-  check('LAPO girl hostel is Amethyst Hall', lapo.hostelId === 'amethyst', lapo.hostelId)
+  check('NEPO boy hostel is Emerald Hall', nepo.hostelId === 'emerald', nepo.hostelId)
+  check('LAPO girl hostel is Sapphire Hall', lapo.hostelId === 'sapphire', lapo.hostelId)
   check(
     'NEPO starts with premium furniture',
     nepo.equipment.furniture.bed === 'furn-bed-premium' && Boolean(nepo.equipment.furniture.ac),

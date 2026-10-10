@@ -208,6 +208,7 @@ interface SceneFrameProps {
   location: LocationId
   phase: TimePhase
   label: string
+  playerLook: AvatarLook
   hotspots: HotspotDef[]
   onActivity: (id: string) => void
   onNpc: (id: string) => void
@@ -220,6 +221,7 @@ function SceneFrame({
   location,
   phase,
   label,
+  playerLook,
   hotspots,
   onActivity,
   onNpc,
@@ -245,7 +247,13 @@ function SceneFrame({
   }
   return (
     <div className="relative h-full min-h-0 w-full overflow-hidden bg-slate-950">
-      <Environment3D location={location} phase={phase} activityCue={activityCue} />
+      <Environment3D
+        location={location}
+        phase={phase}
+        playerLook={playerLook}
+        activityCue={activityCue}
+        animationsEnabled={animated}
+      />
 
       <div
         className="pointer-events-none absolute inset-0"
@@ -395,7 +403,7 @@ function HostelScene({ save, phase, ...handlers }: SceneProps) {
   ]
 
   return (
-    <SceneFrame location="hostel" phase={phase} label={save.hostelName} hotspots={hotspots} animated={save.settings.animations} {...handlers}>
+    <SceneFrame location="hostel" phase={phase} label={save.hostelName} playerLook={sceneLooking(save)} hotspots={hotspots} animated={save.settings.animations} {...handlers}>
       <rect width="800" height="460" fill={wall} />
       <rect y="300" width="800" height="160" fill={floor} />
       <rect y="292" width="800" height="10" fill="rgba(0,0,0,0.12)" />
@@ -547,7 +555,7 @@ function CafeteriaScene({ save, phase, ...handlers }: SceneProps) {
   ]
 
   return (
-    <SceneFrame location="cafeteria" phase={phase} label="Amala Food Court" hotspots={hotspots} animated={save.settings.animations} {...handlers}>
+    <SceneFrame location="cafeteria" phase={phase} label="Amala Food Court" playerLook={sceneLooking(save)} hotspots={hotspots} animated={save.settings.animations} {...handlers}>
       <rect width="800" height="460" fill="#f6ead2" />
       <rect y="300" width="800" height="160" fill="#d8b47c" />
       <g stroke="#c9a469" strokeWidth="2">
@@ -632,7 +640,7 @@ function LectureScene({ save, phase, ...handlers }: SceneProps) {
   ]
 
   return (
-    <SceneFrame location="lecture" phase={phase} label="Science Lecture Theatre" hotspots={hotspots} animated={save.settings.animations} {...handlers}>
+    <SceneFrame location="lecture" phase={phase} label="Science Lecture Theatre" playerLook={sceneLooking(save)} hotspots={hotspots} animated={save.settings.animations} {...handlers}>
       <rect width="800" height="460" fill="#e8ecf5" />
       <rect y="286" width="800" height="174" fill="#9aa3b5" />
       <rect y="278" width="800" height="12" fill="#7c8598" />
@@ -732,7 +740,7 @@ function LibraryScene({ save, phase, ...handlers }: SceneProps) {
   ]
 
   return (
-    <SceneFrame location="library" phase={phase} label="Alumni Library" hotspots={hotspots} animated={save.settings.animations} {...handlers}>
+    <SceneFrame location="library" phase={phase} label="Alumni Library" playerLook={sceneLooking(save)} hotspots={hotspots} animated={save.settings.animations} {...handlers}>
       <rect width="800" height="460" fill="#f0e7d6" />
       <rect y="300" width="800" height="160" fill="#c8a878" />
       <rect y="292" width="800" height="10" fill="rgba(0,0,0,0.1)" />
@@ -789,7 +797,7 @@ function SportsScene({ save, phase, ...handlers }: SceneProps) {
   ]
 
   return (
-    <SceneFrame location="sports" phase={phase} label="Sports Centre" hotspots={hotspots} animated={save.settings.animations} {...handlers}>
+    <SceneFrame location="sports" phase={phase} label="Sports Centre" playerLook={sceneLooking(save)} hotspots={hotspots} animated={save.settings.animations} {...handlers}>
       <Sky phase={phase} />
       <rect y="250" width="800" height="210" fill="#3f9d5b" />
       <rect y="250" width="800" height="18" fill="#357f4b" />
@@ -839,7 +847,7 @@ function ShopScene({ save, phase, ...handlers }: SceneProps) {
   ]
 
   return (
-    <SceneFrame location="shop" phase={phase} label="Campus Mart" hotspots={hotspots} animated={save.settings.animations} {...handlers}>
+    <SceneFrame location="shop" phase={phase} label="Campus Mart" playerLook={sceneLooking(save)} hotspots={hotspots} animated={save.settings.animations} {...handlers}>
       <rect width="800" height="460" fill="#e6f1e4" />
       <rect y="300" width="800" height="160" fill="#c6cdc4" />
       <rect y="292" width="800" height="10" fill="rgba(0,0,0,0.1)" />
@@ -933,7 +941,7 @@ function HangoutScene({ save, phase, ...handlers }: SceneProps) {
   ]
 
   return (
-    <SceneFrame location="hangout" phase={phase} label="Student Union Pavilion" hotspots={hotspots} animated={save.settings.animations} {...handlers}>
+    <SceneFrame location="hangout" phase={phase} label="Student Union Pavilion" playerLook={sceneLooking(save)} hotspots={hotspots} animated={save.settings.animations} {...handlers}>
       <Sky phase={phase} />
       <rect y="270" width="800" height="190" fill="#4f7d4a" />
       <rect y="270" width="800" height="16" fill="#3f6b3c" />
@@ -1006,7 +1014,7 @@ function EventScene({ save, phase, ...handlers }: SceneProps) {
   ]
 
   return (
-    <SceneFrame location="event" phase={phase} label="Campus Event Ground" hotspots={hotspots} animated={save.settings.animations} {...handlers}>
+    <SceneFrame location="event" phase={phase} label="Campus Event Ground" playerLook={sceneLooking(save)} hotspots={hotspots} animated={save.settings.animations} {...handlers}>
       <Sky phase={phase} />
       <rect y="280" width="800" height="180" fill="#6b7f4a" />
       <rect y="280" width="800" height="14" fill="#57683b" />

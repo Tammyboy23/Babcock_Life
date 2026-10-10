@@ -3,6 +3,7 @@ import {
   CalendarDays,
   Ellipsis,
   Heart,
+  Smartphone,
   Map as MapIcon,
   Package,
   Pause,
@@ -25,6 +26,7 @@ const NAV = [
   { panel: 'inventory', label: 'Bag', icon: Package },
   { panel: 'shop', label: 'Shop', icon: BookOpen },
   { panel: 'character', label: 'Profile', icon: UserRound },
+  { panel: 'phone', label: 'Phone', icon: Smartphone },
 ] as const
 
 export function GameHUD() {
@@ -130,6 +132,15 @@ export function GameHUD() {
         <div className="flex shrink-0 items-center gap-1">
           <button
             type="button"
+            onClick={() => setPanel('phone')}
+            className="btn-ghost !h-8 !w-8 !p-0"
+            title="Phone"
+            aria-label="Phone"
+          >
+            <Smartphone size={15} />
+          </button>
+          <button
+            type="button"
             onClick={() => setPanel('map')}
             className="btn-ghost !h-8 !w-8 !p-0"
             title="Campus map"
@@ -151,7 +162,7 @@ export function GameHUD() {
       </div>
       {mobileMenuOpen && (
         <div className="panel pointer-events-auto absolute right-2 top-[4.2rem] grid grid-cols-4 gap-1 p-2 sm:hidden">
-          {NAV.filter((entry) => entry.panel !== 'map').map((entry) => {
+          {NAV.filter((entry) => entry.panel !== 'map' && entry.panel !== 'phone').map((entry) => {
             const Icon = entry.icon
             return (
               <button

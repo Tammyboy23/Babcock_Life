@@ -23,6 +23,7 @@ export type PanelId =
   | 'map'
   | 'relationships'
   | 'schedule'
+  | 'phone'
 
 export type ItemCategory = 'outfit' | 'furniture' | 'consumable' | 'gift'
 

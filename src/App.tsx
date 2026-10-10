@@ -12,6 +12,7 @@ import { MainMenu } from './components/MainMenu'
 import { MissionPanel } from './components/MissionPanel'
 import { GameErrorBoundary, LoadingOverlay, useBootDelay } from './components/Overlays'
 import { PauseMenu } from './components/PauseMenu'
+import { PhonePanel } from './components/PhonePanel'
 import { RelationshipsPanel } from './components/RelationshipsPanel'
 import { SchedulePanel } from './components/SchedulePanel'
 import { SettingsPanel } from './components/SettingsPanel'
@@ -91,6 +92,7 @@ export default function App() {
             {panel === 'map' && <CampusMapPanel />}
             {panel === 'relationships' && <RelationshipsPanel />}
             {panel === 'schedule' && <SchedulePanel />}
+            {panel === 'phone' && <PhonePanel />}
             <EventModal />
             <PauseMenu />
           </div>
